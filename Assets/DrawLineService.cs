@@ -61,9 +61,14 @@ public class DrawLineService : MonoBehaviour
             var mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousePosition.z = 0;
 
-            lineRenderer.positionCount++;
-            lineRenderer.SetPosition(lineRenderer.positionCount - 1, mousePosition);
-            lineRenderer.sortingOrder = 1;
+            Vector2 direction = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+            if (direction.magnitude != 0)
+            {
+                lineRenderer.positionCount++;
+                lineRenderer.SetPosition(lineRenderer.positionCount - 1, mousePosition);
+                lineRenderer.sortingOrder = 1;
+            }
+
             yield return null;
         }
     }
