@@ -506,6 +506,8 @@ MonoBehaviour:
   circle: {fileID: 1050247657}
   minimumDistanceFromCircle: 0.8
   lineEndsToleranceMax: 0.025
+  LineInfoCheckPointsThreshold: 250
+  DistanceCheckPointsThreshold: 5
 --- !u!114 &1050247661
 MonoBehaviour:
   m_ObjectHideFlags: 0

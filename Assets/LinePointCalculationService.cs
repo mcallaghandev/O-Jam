@@ -22,6 +22,14 @@ public class LinePointCalculationService : MonoBehaviour
     [SerializeField]
     private float lineEndsToleranceMax;
 
+    Coroutine lineInfoRoutine;
+
+    [SerializeField]
+    int LineInfoCheckPointsThreshold;
+
+    [SerializeField]
+    int DistanceCheckPointsThreshold;
+
     void Start()
     {
         lineRenderer = line.GetComponent<LineRenderer>();
@@ -52,22 +60,35 @@ public class LinePointCalculationService : MonoBehaviour
         }
     }
 
-    private IEnumerator EndIsLineInfoCheckComplete()
+    private IEnumerator LineInfoDisplay(string message)
     {
+        scoreManager.SetLineInfoText(message);
+
         yield return new WaitForSeconds(2);
 
         scoreManager.ClearLineInfoText();
+        StopCoroutine(lineInfoRoutine);
+        lineInfoRoutine = null; ;
     }
 
     private void IsCircleComplete()
     {
+        if (lineRenderer.positionCount < LineInfoCheckPointsThreshold)
+        {
+            return;
+        }
+
         var startPoints = GetRangeOfLinePositions(lineRenderer, 0, 50);
         var endPoints = GetRangeOfLinePositions(lineRenderer, lineRenderer.positionCount - 1 - 50, lineRenderer.positionCount - 1);
 
-        if(AreAllOfTheEndPointsAwayFromEachOther(startPoints, endPoints))
+        if (AreAllOfTheEndPointsAwayFromEachOther(startPoints, endPoints))
         {
-            scoreManager.SetLineInfoText($"Not a circle! :O");
-            StartCoroutine(EndIsLineInfoCheckComplete());
+            if (lineInfoRoutine != null)
+            {
+                return;
+            }
+
+            lineInfoRoutine = StartCoroutine(LineInfoDisplay("Not a circle! :O"));
         }
     }
 
@@ -101,43 +122,48 @@ public class LinePointCalculationService : MonoBehaviour
     private void IsLineTooClose()
     {
         var allLinePoints = new List<Vector3>();
-        List<float> distances = new List<float>();
+        var distances = new List<float>();
 
         for (int i = 0; i < lineRenderer.positionCount; i++)
         {
             allLinePoints.Add(lineRenderer.GetPosition(i));
         }
 
-        if (allLinePoints.Count > 250)
+        if (allLinePoints.Count < LineInfoCheckPointsThreshold)
         {
-            foreach (var linePoint in allLinePoints)
+            return;
+        }
+
+        foreach (var linePoint in allLinePoints)
+        {
+            distances.Add(Vector3.Distance(linePoint, circle.transform.position));
+        }
+
+        var average = distances.Average();
+
+        if (average < minimumDistanceFromCircle)
+        {
+            if (lineInfoRoutine != null)
             {
-                distances.Add(Vector3.Distance(linePoint, circle.transform.position));
+                return;
             }
 
-            var average = distances.Average();
-
-            if(average < minimumDistanceFromCircle)
-            {
-                scoreManager.SetLineInfoText($"Too close! :)");
-                StartCoroutine(EndIsLineInfoCheckComplete());
-            }
+            lineInfoRoutine = StartCoroutine(LineInfoDisplay("Too close! :)"));
         }
     }
 
     private IEnumerator CalculatePercentDistance()
     {
         var allLinePoints = new List<Vector3>();
-        List<float> distances = new List<float>();
+        var distances = new List<float>();
 
         for (int i = 0; i < lineRenderer.positionCount; i++)
         {
             allLinePoints.Add(lineRenderer.GetPosition(i));
         }
 
-        if (allLinePoints.Count > 5)
+        if (allLinePoints.Count > DistanceCheckPointsThreshold)
         {
-
             foreach (var linePoint in allLinePoints)
             {
                 distances.Add(Vector3.Distance(linePoint, circle.transform.position));
